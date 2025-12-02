@@ -1,0 +1,15 @@
+{
+  "name": "@ales-/shai-hulud-testjson",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "shai": "node index.js"
+  },
+  "keywords": [],
+  "author": "Ales",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@ales-/shai-hulud-testjson": "^1.0.0"
+  }
+}
