@@ -841,8 +841,8 @@ var arrayListPackageShaiHulud = [
     "*-output",
     "*-styles"
 ]
+
 var conteudoPackageLock;
-var conteudoPackage;
 var danos = [];
 
 function corresponde(texto, padrao) {
@@ -859,11 +859,45 @@ function registrarDano(item) {
     }
 }
 
-function testShaiHulud(pastaDesejada) {
-    var arquivosPresentes = fs.readdirSync(pastaDesejada, "utf-8");
+function buscarPackageLock(inicio) {
+    var itens = fs.readdirSync(inicio);
+
+    for (var i = 0; i < itens.length; i++) {
+        var item = itens[i];
+        var caminho = path.join(inicio, item);
+        var stats = fs.statSync(caminho);
+
+        if (stats.isDirectory()) {
+            var resultado = buscarPackageLock(caminho);
+            if (resultado) return resultado;
+        }
+
+        if (item === "package-lock.json") {
+            return caminho;
+        }
+    }
+
+    return null;
+}
+
+function testShaiHuludCLI() {
+    console.log("🔍 Procurando package-lock.json...");
+
+    var caminhoPackageLock = buscarPackageLock(process.cwd());
+
+    if (!caminhoPackageLock) {
+        console.log("❌ Nenhum package-lock.json encontrado no projeto.");
+        return [{ status: -1, danos: [] }];
+    }
+
+    console.log("📦 package-lock encontrado em:", caminhoPackageLock);
+
+    var pasta = path.dirname(caminhoPackageLock);
+
+    var arquivosPresentes = fs.readdirSync(pasta, "utf-8");
 
     arquivosPresentes.forEach(function (arquivo) {
-        var caminho = path.join(pastaDesejada, arquivo);
+        var caminho = path.join(pasta, arquivo);
 
         if (arquivo === "package.json") {
             conteudoPackage = JSON.parse(fs.readFileSync(caminho, "utf-8"));
@@ -896,6 +930,7 @@ function testShaiHulud(pastaDesejada) {
 
     if (danos.length > 0) {
         console.log("⚠ Libs suspeitas foram encontradas nesse projeto");
+        console.log(danos)
         return [{ status: 1, danos: danos }];
     } else {
         console.log("✅ Nenhuma lib suspeita encontrada");
@@ -903,7 +938,4 @@ function testShaiHulud(pastaDesejada) {
     }
 }
 
-console.log(testShaiHulud(__dirname));
-
-module.exports = testShaiHulud;
-
+module.exports = testShaiHuludCLI;

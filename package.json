@@ -2,8 +2,11 @@
   "name": "@ales-/shai-hulud-testjson",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "shai-hulud-check": "./bin/shai-hulud-check"
+  },
   "scripts": {
-    "shai": "node index.js"
+    "shai-hulud-check": "node ./bin/shai-hulud-check"
   },
   "keywords": [],
   "author": "Ales",
