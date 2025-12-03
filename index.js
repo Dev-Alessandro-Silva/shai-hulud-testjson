@@ -4,7 +4,6 @@ var arrayListPackageShaiHulud = [
     "@ahmedhfarag/ngx-perfect-scrollbar@20.0.20",
     "@ahmedhfarag/ngx-virtual-scroller@4.0.4",
     "ahmedhfarag",
-    "ex",
     "@art-ws/common@2.0.22",
     "@art-ws/common@2.0.28",
     "@art-ws/config-eslint@2.0.4",
