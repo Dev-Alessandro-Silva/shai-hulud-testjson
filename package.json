@@ -11,9 +11,5 @@
   "keywords": [],
   "author": "Ales",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@ales-/shai-hulud-testjson": "^1.0.0",
-    "express": "^5.2.1"
-  }
+  "description": ""
 }
