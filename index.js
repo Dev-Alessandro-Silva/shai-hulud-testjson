@@ -832,7 +832,6 @@ var arrayListPackageShaiHulud = [
     "*-tree",
     "*-query",
     "*-builder",
-    "ex",
     "*-bird",
     "*-gen",
     "*-reader",
