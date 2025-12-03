@@ -4,6 +4,7 @@ var arrayListPackageShaiHulud = [
     "@ahmedhfarag/ngx-perfect-scrollbar@20.0.20",
     "@ahmedhfarag/ngx-virtual-scroller@4.0.4",
     "ahmedhfarag",
+    "ex",
     "@art-ws/common@2.0.22",
     "@art-ws/common@2.0.28",
     "@art-ws/config-eslint@2.0.4",
@@ -841,9 +842,14 @@ var arrayListPackageShaiHulud = [
     "*-output",
     "*-styles"
 ]
-
-var conteudoPackageLock;
+var conteudo;
 var danos = [];
+
+function cortarDepois(texto, alvo) {
+    const pos = texto.indexOf(alvo);
+    if (pos === -1) return texto;
+    return texto.slice(0, pos);
+}
 
 function corresponde(texto, padrao) {
     var regex = new RegExp(
@@ -859,57 +865,31 @@ function registrarDano(item) {
     }
 }
 
-function buscarPackageLock(inicio) {
-    var itens = fs.readdirSync(inicio);
+function buscarPackage(inicio) {
+    var inicioadaptado = cortarDepois(inicio, "node_modules");
+    var itens = fs.readdirSync(inicioadaptado);
+
+    var caminhoPackageLock = null;
 
     for (var i = 0; i < itens.length; i++) {
         var item = itens[i];
-        var caminho = path.join(inicio, item);
-        var stats = fs.statSync(caminho);
+        var caminho = path.join(inicioadaptado, item);
 
-        if (stats.isDirectory()) {
-            var resultado = buscarPackageLock(caminho);
-            if (resultado) return resultado;
+        if (item === "package.json") {
+            return caminho;
         }
 
         if (item === "package-lock.json") {
-            return caminho;
+            caminhoPackageLock = caminho;
         }
     }
 
-    return null;
+    return caminhoPackageLock;
 }
 
-function testShaiHuludCLI() {
-    console.log("🔍 Procurando package-lock.json...");
-
-    var caminhoPackageLock = buscarPackageLock(process.cwd());
-
-    if (!caminhoPackageLock) {
-        console.log("❌ Nenhum package-lock.json encontrado no projeto.");
-        return [{ status: -1, danos: [] }];
-    }
-
-    console.log("📦 package-lock encontrado em:", caminhoPackageLock);
-
-    var pasta = path.dirname(caminhoPackageLock);
-
-    var arquivosPresentes = fs.readdirSync(pasta, "utf-8");
-
-    arquivosPresentes.forEach(function (arquivo) {
-        var caminho = path.join(pasta, arquivo);
-
-        if (arquivo === "package.json") {
-            conteudoPackage = JSON.parse(fs.readFileSync(caminho, "utf-8"));
-        }
-
-        if (arquivo === "package-lock.json") {
-            conteudoPackageLock = JSON.parse(fs.readFileSync(caminho, "utf-8"));
-        }
-    });
-
-    if (conteudoPackageLock && conteudoPackageLock.packages) {
-        var pacotesInstalados = Object.keys(conteudoPackageLock.packages);
+function ValidarBibliotecas(PackageLock, packageJson) {
+    if (PackageLock && PackageLock.packages) {
+        var pacotesInstalados = Object.keys(PackageLock.packages);
 
         pacotesInstalados.forEach(function (instalado) {
             arrayListPackageShaiHulud.forEach(function (padrao) {
@@ -926,6 +906,45 @@ function testShaiHuludCLI() {
                 }
             });
         });
+    }
+
+    if (packageJson && packageJson.dependencies) {
+        var pacotesInstalados = Object.keys(packageJson.dependencies);
+
+        pacotesInstalados.forEach(function (instalado) {
+            arrayListPackageShaiHulud.forEach(function (padrao) {
+                if (corresponde(instalado, padrao)) {
+                    console.log(
+                        "⚠ SEMELHANÇA DETECTADA | Padrão: \"" +
+                        padrao +
+                        "\" | Encontrado em package-lock: \"" +
+                        instalado +
+                        "\""
+                    );
+
+                    registrarDano(instalado);
+                }
+            });
+        });
+    }
+}
+
+function testShaiHuludCLI() {
+    console.log("🔍 Procurando package-lock.json...");
+
+    var caminhoPackageLock = buscarPackage(process.cwd());
+    if (!caminhoPackageLock) {
+        console.log("❌ Nenhum package-lock.json encontrado no projeto.");
+        return [{ status: -1, danos: [] }];
+    }
+
+    console.log("📦 package-lock encontrado em:", caminhoPackageLock);
+    if(caminhoPackageLock.indexOf('package-lock') == -1){
+        conteudo = JSON.parse(fs.readFileSync(caminhoPackageLock, "utf-8"));
+        ValidarBibliotecas(null, conteudo)
+    } else{
+        conteudo = JSON.parse(fs.readFileSync(caminhoPackageLock, "utf-8"));
+        ValidarBibliotecas(conteudo)
     }
 
     if (danos.length > 0) {

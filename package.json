@@ -1,5 +1,5 @@
 {
-  "name": "@ales-/shai-hulud-testjson",
+  "name": "shai-hulud-testjson",
   "version": "1.0.1",
   "main": "index.js",
   "bin": {
@@ -11,5 +11,8 @@
   "keywords": [],
   "author": "Ales",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
