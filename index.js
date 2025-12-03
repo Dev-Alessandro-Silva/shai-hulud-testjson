@@ -1,5 +1,7 @@
 const fs = require('fs')
 const path = require('path')
+const readline = require("readline");
+const execSync = require("child_process").execSync;
 var arrayListPackageShaiHulud = [
     "@ahmedhfarag/ngx-perfect-scrollbar@20.0.20",
     "@ahmedhfarag/ngx-virtual-scroller@4.0.4",
@@ -907,53 +909,125 @@ function ValidarBibliotecas(PackageLock, packageJson) {
         });
     }
 
-    if (packageJson && packageJson.dependencies) {
-        var pacotesInstalados = Object.keys(packageJson.dependencies);
+    if (packageJson) {
+        if (packageJson.dependencies) {
+            var pacotesInstalados = Object.keys(packageJson.dependencies);
+            pacotesInstalados.forEach(function (instalado) {
+                arrayListPackageShaiHulud.forEach(function (padrao) {
+                    if (corresponde(instalado, padrao)) {
+                        console.log(
+                            "⚠ SEMELHANÇA DETECTADA | Padrão: \"" +
+                            padrao +
+                            "\" | Encontrado em package-lock: \"" +
+                            instalado +
+                            "\""
+                        );
 
-        pacotesInstalados.forEach(function (instalado) {
-            arrayListPackageShaiHulud.forEach(function (padrao) {
-                if (corresponde(instalado, padrao)) {
-                    console.log(
-                        "⚠ SEMELHANÇA DETECTADA | Padrão: \"" +
-                        padrao +
-                        "\" | Encontrado em package-lock: \"" +
-                        instalado +
-                        "\""
-                    );
-
-                    registrarDano(instalado);
-                }
+                        registrarDano(instalado);
+                    }
+                });
             });
-        });
+        }
+        
+        if (packageJson.devDependencies) {
+            var pacotesInstaladosDev = Object.keys(packageJson.devDependencies);
+            pacotesInstaladosDev.forEach(function (instalado) {
+                arrayListPackageShaiHulud.forEach(function (padrao) {
+                    if (corresponde(instalado, padrao)) {
+                        console.log(
+                            "⚠ SEMELHANÇA DETECTADA | Padrão: \"" +
+                            padrao +
+                            "\" | Encontrado em package-lock - DEV: \"" +
+                            instalado +
+                            "\""
+                        );
+
+                        registrarDano(instalado);
+                    }
+                });
+            });
+        }
     }
 }
 
+function perguntarDesinstalar(callback) {
+    var rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    rl.question("❓ Deseja desinstalar as libs suspeitas? (s/n): ", function (resposta) {
+        rl.close();
+        resposta = resposta.trim().toLowerCase();
+        callback(resposta === "s" || resposta == "sim");
+    });
+}
+
+function desinstalarDanos() {
+    if (danos.length === 0) {
+        console.log("✅ Nenhuma lib suspeita para desinstalar.");
+        return;
+    }
+
+    console.log("🧹 Iniciando remoção das libs suspeitas...");
+
+    danos.forEach(function (lib) {
+        try {
+            // npm uninstall <lib>
+            console.log("🔧 Removendo:", lib);
+
+            execSync("npm uninstall " + lib, {
+                stdio: "inherit"
+            });
+
+            console.log("✔ Removida:", lib);
+        } catch (err) {
+            console.log("❌ Falha ao remover:", lib);
+            console.log(err.message);
+        }
+    });
+
+    console.log("🏁 Processo de remoção concluído.");
+}
+
 function testShaiHuludCLI() {
-    console.log("🔍 Procurando package-lock.json...");
+    console.log("🔍 Procurando package.json...");
 
     var caminhoPackageLock = buscarPackage(process.cwd());
     if (!caminhoPackageLock) {
-        console.log("❌ Nenhum package-lock.json encontrado no projeto.");
+        console.log("❌ Nenhum package.json encontrado no projeto.");
         return [{ status: -1, danos: [] }];
     }
 
     console.log("📦 package-lock encontrado em:", caminhoPackageLock);
-    if(caminhoPackageLock.indexOf('package-lock') == -1){
+    if (caminhoPackageLock.indexOf('package-lock') == -1) {
         conteudo = JSON.parse(fs.readFileSync(caminhoPackageLock, "utf-8"));
         ValidarBibliotecas(null, conteudo)
-    } else{
+    } else {
         conteudo = JSON.parse(fs.readFileSync(caminhoPackageLock, "utf-8"));
         ValidarBibliotecas(conteudo)
     }
 
     if (danos.length > 0) {
-        console.log("⚠ Libs suspeitas foram encontradas nesse projeto");
-        console.log(danos)
+        console.log("⚠ Libs suspeitas foram encontradas nesse projeto:");
+        console.log(danos);
+
+        perguntarDesinstalar(function (confirmado) {
+            if (confirmado) {
+                console.log("🧹 Iniciando remoção...");
+                desinstalarDanos();
+            } else {
+                console.log("❎ Desinstalação cancelada pelo usuário.");
+            }
+        });
+
         return [{ status: 1, danos: danos }];
     } else {
         console.log("✅ Nenhuma lib suspeita encontrada");
         return [{ status: 0, danos: danos }];
     }
 }
+
+console.log(testShaiHuludCLI())
 
 module.exports = testShaiHuludCLI;
