@@ -1,6 +1,6 @@
 {
   "name": "@ales-/shai-hulud-testjson",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "bin": {
     "shai-hulud-check": "./bin/shai-hulud-check"
