@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-let arrayListPackageShaiHulud = [
+var arrayListPackageShaiHulud = [
     "@ahmedhfarag/ngx-perfect-scrollbar@20.0.20",
     "@ahmedhfarag/ngx-virtual-scroller@4.0.4",
     "ahmedhfarag",
@@ -832,6 +832,7 @@ let arrayListPackageShaiHulud = [
     "*-tree",
     "*-query",
     "*-builder",
+    "ex",
     "*-bird",
     "*-gen",
     "*-reader",
@@ -841,60 +842,69 @@ let arrayListPackageShaiHulud = [
     "*-output",
     "*-styles"
 ]
-let conteudoPackage
-let conteudoPackageLock
-let danos = []
+var conteudoPackageLock;
+var conteudoPackage;
+var danos = [];
 
-const corresponde = (texto, padrao) => {
-    const regex = new RegExp(
+function corresponde(texto, padrao) {
+    var regex = new RegExp(
         padrao.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
         "i"
     );
     return regex.test(texto);
-};
+}
 
-const registrarDano = (item) => {
-    if (!danos.includes(item)) {
+function registrarDano(item) {
+    if (danos.indexOf(item) === -1) {
         danos.push(item);
     }
-};
+}
 
-const testShaiHulud = (pastaDesejada, dentroNodeModules = false) => {
-    const arquivosPresentes = fs.readdirSync(pastaDesejada, 'utf-8');
+function testShaiHulud(pastaDesejada) {
+    var arquivosPresentes = fs.readdirSync(pastaDesejada, "utf-8");
 
-    for (const arquivo of arquivosPresentes) {
-        const caminho = path.join(pastaDesejada, arquivo);
-        if (arquivo === 'package.json') {
-            conteudoPackage = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+    arquivosPresentes.forEach(function (arquivo) {
+        var caminho = path.join(pastaDesejada, arquivo);
+
+        if (arquivo === "package.json") {
+            conteudoPackage = JSON.parse(fs.readFileSync(caminho, "utf-8"));
         }
 
-        if (arquivo === 'package-lock.json') {
-            conteudoPackageLock = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+        if (arquivo === "package-lock.json") {
+            conteudoPackageLock = JSON.parse(fs.readFileSync(caminho, "utf-8"));
         }
-    }
+    });
 
-    if (conteudoPackageLock?.packages) {
-        const pacotesInstalados = Object.keys(conteudoPackageLock.packages);
+    if (conteudoPackageLock && conteudoPackageLock.packages) {
+        var pacotesInstalados = Object.keys(conteudoPackageLock.packages);
 
-        pacotesInstalados.forEach((instalado) => {
-            arrayListPackageShaiHulud.forEach((padrao) => {
+        pacotesInstalados.forEach(function (instalado) {
+            arrayListPackageShaiHulud.forEach(function (padrao) {
                 if (corresponde(instalado, padrao)) {
                     console.log(
-                        `⚠ SEMELHANÇA DETECTADA | Padrão: "${padrao}" | Encontrado em package-lock: "${instalado}"`
+                        "⚠ SEMELHANÇA DETECTADA | Padrão: \"" +
+                        padrao +
+                        "\" | Encontrado em package-lock: \"" +
+                        instalado +
+                        "\""
                     );
+
                     registrarDano(instalado);
                 }
             });
         });
     }
+
     if (danos.length > 0) {
-        console.log(`⚠ Libs suspeitas foram encontradas nesse projeto`);
-        return [{ status: 1, danos }]
+        console.log("⚠ Libs suspeitas foram encontradas nesse projeto");
+        return [{ status: 1, danos: danos }];
     } else {
-        console.log('✅ Nenhuma lib suspeita encontrada');
-        return [{ status: 0, danos }];
+        console.log("✅ Nenhuma lib suspeita encontrada");
+        return [{ status: 0, danos: danos }];
     }
-};
+}
+
+console.log(testShaiHulud(__dirname));
 
 module.exports = testShaiHulud;
 
